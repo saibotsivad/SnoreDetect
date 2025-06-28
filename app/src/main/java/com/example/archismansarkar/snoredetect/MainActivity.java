@@ -6,6 +6,7 @@ import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -22,6 +23,7 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -125,6 +127,32 @@ public class MainActivity extends AppCompatActivity {
         recordingThread.start();
     }
 
+    private File getAudioFile() {
+        File audioDir = null;
+        
+        // Try to use external files directory first (preferred for API 29+)
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            audioDir = getExternalFilesDir(Environment.DIRECTORY_MUSIC);
+        }
+        
+        // Fallback to internal storage if external storage is not available
+        if (audioDir == null || !audioDir.exists()) {
+            audioDir = new File(getFilesDir(), "audio");
+        }
+        
+        // Create directory if it doesn't exist
+        if (!audioDir.exists()) {
+            boolean created = audioDir.mkdirs();
+            if (!created) {
+                Log.e("AudioStorage", "Failed to create audio directory: " + audioDir.getPath());
+                // Final fallback to files directory
+                audioDir = getFilesDir();
+            }
+        }
+        
+        return new File(audioDir, "8k16bitMono.pcm");
+    }
+
     //Conversion of short to byte
     private byte[] short2byte(short[] sData) {
         int shortArrsize = sData.length;
@@ -141,13 +169,16 @@ public class MainActivity extends AppCompatActivity {
     private void writeAudioDataToFile() {
 
         short sData[] = new short[BufferElements2Rec];
-        String filePath = "/sdcard/8k16bitMono.pcm";
+        File audioFile = getAudioFile();
 
         FileOutputStream os = null;
         try {
-            os = new FileOutputStream(filePath);
+            os = new FileOutputStream(audioFile);
+            Log.i("AudioStorage", "Audio file will be saved to: " + audioFile.getAbsolutePath());
         } catch (FileNotFoundException e) {
+            Log.e("AudioStorage", "Failed to create audio file: " + audioFile.getAbsolutePath(), e);
             e.printStackTrace();
+            return; // Exit early if we can't create the file
         }
 
         while (isRecording) {
@@ -176,10 +207,14 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        try {
-            os.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (os != null) {
+            try {
+                os.close();
+                Log.i("AudioStorage", "Audio file saved successfully");
+            } catch (IOException e) {
+                Log.e("AudioStorage", "Failed to close audio file", e);
+                e.printStackTrace();
+            }
         }
     }
 

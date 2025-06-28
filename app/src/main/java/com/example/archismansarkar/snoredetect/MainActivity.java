@@ -1,16 +1,22 @@
 package com.example.archismansarkar.snoredetect;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Handler;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -24,10 +30,14 @@ import java.nio.Buffer;
 public class MainActivity extends AppCompatActivity {
 
     private static final int RECORDER_SAMPLERATE = 8000;
-
     private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
-
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
+    
+    private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
+    private static final String[] REQUIRED_PERMISSIONS = {
+        Manifest.permission.RECORD_AUDIO,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    };
 
     private AudioRecord recorder = null;
     private Thread recordingThread = null;
@@ -59,6 +69,9 @@ public class MainActivity extends AppCompatActivity {
 
         int bufferSize = AudioRecord.getMinBufferSize(RECORDER_SAMPLERATE,
                 RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
+        
+        // Check permissions on startup
+        checkPermissions();
     }
 
     private void setButtonHandlers() {
@@ -191,8 +204,12 @@ public class MainActivity extends AppCompatActivity {
             switch (v.getId()) {
                 case R.id.btnStart: {
                     //Log.i("AudioData ", "Start Pressed");
-                    enableButtons(true);
-                    startRecording();
+                    if (hasRequiredPermissions()) {
+                        enableButtons(true);
+                        startRecording();
+                    } else {
+                        requestPermissions();
+                    }
                     break;
                 }
                 case R.id.btnStop: {
@@ -204,6 +221,63 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
+
+    private void checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!hasRequiredPermissions()) {
+                requestPermissions();
+            }
+        }
+    }
+
+    private boolean hasRequiredPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            for (String permission : REQUIRED_PERMISSIONS) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && 
+                    permission.equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    // Skip WRITE_EXTERNAL_STORAGE check on API 33+ (Android 13+)
+                    continue;
+                }
+                if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private void requestPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            String[] permissionsToRequest;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                // On API 33+, only request RECORD_AUDIO
+                permissionsToRequest = new String[]{Manifest.permission.RECORD_AUDIO};
+            } else {
+                permissionsToRequest = REQUIRED_PERMISSIONS;
+            }
+            ActivityCompat.requestPermissions(this, permissionsToRequest, PERMISSIONS_REQUEST_RECORD_AUDIO);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
+            boolean allPermissionsGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allPermissionsGranted = false;
+                    break;
+                }
+            }
+            
+            if (allPermissionsGranted) {
+                Toast.makeText(this, "Permissions granted. You can now start recording.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Permissions are required for audio recording", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
 
     // onClick of backbutton finishes the activity.
     @Override

@@ -1,4 +1,4 @@
-package com.example.archismansarkar.snoredetect;
+package com.davistobias.snoredetect;
 
 import android.app.Notification;
 import android.app.NotificationChannel;

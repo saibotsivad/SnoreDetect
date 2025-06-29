@@ -1,4 +1,4 @@
-package com.example.archismansarkar.snoredetect;
+package com.davistobias.snoredetect;
 
 import org.junit.Test;
 

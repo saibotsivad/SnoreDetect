@@ -56,7 +56,7 @@ public class AudioRecordingService extends Service {
     }
     
     public class AudioRecordingBinder extends Binder {
-        AudioRecordingService getService() {
+        public AudioRecordingService getService() {
             return AudioRecordingService.this;
         }
     }

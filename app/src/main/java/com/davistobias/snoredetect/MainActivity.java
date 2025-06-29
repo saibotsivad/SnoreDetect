@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -121,28 +122,24 @@ public class MainActivity extends AppCompatActivity {
 
     private View.OnClickListener btnClick = new View.OnClickListener() {
         public void onClick(View v) {
-            switch (v.getId()) {
-                case R.id.btnStart: {
-                    //Log.i("AudioData ", "Start Pressed");
-                    if (hasRequiredPermissions()) {
-                        if (requestAudioFocus()) {
-                            enableButtons(true);
-                            startRecording();
-                        } else {
-                            Toast.makeText(MainActivity.this, "Cannot start recording - audio focus denied", Toast.LENGTH_SHORT).show();
-                        }
+            int viewId = v.getId();
+            if (viewId == R.id.btnStart) {
+                //Log.i("AudioData ", "Start Pressed");
+                if (hasRequiredPermissions()) {
+                    if (requestAudioFocus()) {
+                        enableButtons(true);
+                        startRecording();
                     } else {
-                        requestPermissions();
+                        Toast.makeText(MainActivity.this, "Cannot start recording - audio focus denied", Toast.LENGTH_SHORT).show();
                     }
-                    break;
+                } else {
+                    requestPermissions();
                 }
-                case R.id.btnStop: {
-                    //Log.i("AudioData ", "Stop pressed");
-                    enableButtons(false);
-                    stopRecording();
-                    releaseAudioFocus();
-                    break;
-                }
+            } else if (viewId == R.id.btnStop) {
+                //Log.i("AudioData ", "Stop pressed");
+                enableButtons(false);
+                stopRecording();
+                releaseAudioFocus();
             }
         }
     };
@@ -212,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
                     // Lost focus permanently - stop recording
                     Log.i("AudioFocus", "Audio focus lost permanently");
                     hasAudioFocus = false;
-                    if (isRecording) {
+                    if (serviceBound && audioService != null && audioService.isRecording()) {
                         stopRecording();
                         runOnUiThread(() -> {
                             enableButtons(false);
@@ -225,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.i("AudioFocus", "Audio focus lost temporarily");
                     hasAudioFocus = false;
                     // For simplicity, we'll stop recording rather than pause
-                    if (isRecording) {
+                    if (serviceBound && audioService != null && audioService.isRecording()) {
                         stopRecording();
                         runOnUiThread(() -> {
                             enableButtons(false);

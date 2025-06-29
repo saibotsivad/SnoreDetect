@@ -97,17 +97,6 @@ public class AudioRecordingService extends Service {
         Log.d(TAG, "AudioRecordingService destroyed");
     }
     
-    @Override
-    public void onTimeout() {
-        // Handle Android 15 6-hour timeout for mediaProcessing services
-        Log.w(TAG, "Service timeout reached - stopping recording");
-        if (audioDataCallback != null) {
-            audioDataCallback.onRecordingError("Recording stopped due to 6-hour timeout limit");
-        }
-        stopRecording();
-        stopForeground(true);
-        stopSelf();
-    }
     
     public void setAudioDataCallback(AudioDataCallback callback) {
         this.audioDataCallback = callback;

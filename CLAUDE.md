@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SnoreDetect is an Android application that monitors audio during sleep to detect snoring patterns, helping diagnose respiratory problems. The app records audio, analyzes decibel levels in real-time, and displays visual feedback through a graph and status indicator.
 
+## Environment Setup
+
+- **Java Configuration**: Set `JAVA_HOME="/opt/homebrew/opt/openjdk@17" && export PATH="$JAVA_HOME/bin:$PATH"` before running gradle commands
+
 ## Build Commands
 
 - **Build project**: `./gradlew build`

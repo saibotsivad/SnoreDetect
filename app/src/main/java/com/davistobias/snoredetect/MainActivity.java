@@ -59,239 +59,318 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        try {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.activity_main);
 
-        setButtonHandlers();
-        enableButtons(false);
-        textView = (TextView) findViewById(R.id.textView);
+            setButtonHandlers();
+            enableButtons(false);
+            textView = (TextView) findViewById(R.id.textView);
 
-        GraphView graph = (GraphView) findViewById(R.id.graph);
-        mSeries = new LineGraphSeries<>();
-        graph.addSeries(mSeries);
-        graph.getViewport().setXAxisBoundsManual(true);
-        graph.getViewport().setMinX(0);
-        graph.getViewport().setMaxX(100);
+            GraphView graph = (GraphView) findViewById(R.id.graph);
+            mSeries = new LineGraphSeries<>();
+            graph.addSeries(mSeries);
+            graph.getViewport().setXAxisBoundsManual(true);
+            graph.getViewport().setMinX(0);
+            graph.getViewport().setMaxX(100);
 
-        // Initialize AudioManager
-        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-        
-        // Check permissions on startup
-        checkPermissions();
-        
-        // Bind to AudioRecordingService
-        bindAudioService();
+            // Initialize AudioManager
+            audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+            
+            // Check permissions on startup
+            checkPermissions();
+            
+            // Bind to AudioRecordingService
+            bindAudioService();
+        } catch (Exception e) {
+            Toast.makeText(this, "onCreate Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "onCreate failed", e);
+        }
     }
 
     private void setButtonHandlers() {
-        ((Button) findViewById(R.id.btnStart)).setOnClickListener(btnClick);
-        ((Button) findViewById(R.id.btnStop)).setOnClickListener(btnClick);
+        try {
+            ((Button) findViewById(R.id.btnStart)).setOnClickListener(btnClick);
+            ((Button) findViewById(R.id.btnStop)).setOnClickListener(btnClick);
+        } catch (Exception e) {
+            Toast.makeText(this, "Button Setup Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "setButtonHandlers failed", e);
+        }
     }
 
     private void enableButton(int id, boolean isEnable) {
-        ((Button) findViewById(id)).setEnabled(isEnable);
+        try {
+            ((Button) findViewById(id)).setEnabled(isEnable);
+        } catch (Exception e) {
+            Toast.makeText(this, "Enable Button Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e("MainActivity", "enableButton failed for id: " + id, e);
+        }
     }
 
     private void enableButtons(boolean isRecording) {
-        enableButton(R.id.btnStart, !isRecording);
-        enableButton(R.id.btnStop, isRecording);
+        try {
+            enableButton(R.id.btnStart, !isRecording);
+            enableButton(R.id.btnStop, isRecording);
+        } catch (Exception e) {
+            Toast.makeText(this, "Enable Buttons Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e("MainActivity", "enableButtons failed", e);
+        }
     }
 
     private void startRecording() {
-        if (serviceBound && audioService != null) {
-            Intent serviceIntent = new Intent(this, AudioRecordingService.class);
-            startService(serviceIntent);
-            
-            boolean started = audioService.startRecording();
-            if (!started) {
-                Toast.makeText(this, "Failed to start recording", Toast.LENGTH_SHORT).show();
-                enableButtons(false);
+        try {
+            if (serviceBound && audioService != null) {
+                Intent serviceIntent = new Intent(this, AudioRecordingService.class);
+                startService(serviceIntent);
+                
+                boolean started = audioService.startRecording();
+                if (!started) {
+                    Toast.makeText(this, "Failed to start recording", Toast.LENGTH_SHORT).show();
+                    enableButtons(false);
+                }
+            } else {
+                Toast.makeText(this, "Audio service not available", Toast.LENGTH_SHORT).show();
             }
-        } else {
-            Toast.makeText(this, "Audio service not available", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(this, "Start Recording Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "startRecording failed", e);
+            enableButtons(false);
         }
     }
 
     private void stopRecording() {
-        if (serviceBound && audioService != null) {
-            audioService.stopRecording();
-            
-            Intent serviceIntent = new Intent(this, AudioRecordingService.class);
-            stopService(serviceIntent);
+        try {
+            if (serviceBound && audioService != null) {
+                audioService.stopRecording();
+                
+                Intent serviceIntent = new Intent(this, AudioRecordingService.class);
+                stopService(serviceIntent);
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Stop Recording Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "stopRecording failed", e);
         }
     }
 
     private View.OnClickListener btnClick = new View.OnClickListener() {
         public void onClick(View v) {
-            int viewId = v.getId();
-            if (viewId == R.id.btnStart) {
-                //Log.i("AudioData ", "Start Pressed");
-                if (hasRequiredPermissions()) {
-                    if (requestAudioFocus()) {
-                        enableButtons(true);
-                        startRecording();
+            try {
+                int viewId = v.getId();
+                if (viewId == R.id.btnStart) {
+                    //Log.i("AudioData ", "Start Pressed");
+                    if (hasRequiredPermissions()) {
+                        if (requestAudioFocus()) {
+                            enableButtons(true);
+                            startRecording();
+                        } else {
+                            Toast.makeText(MainActivity.this, "Cannot start recording - audio focus denied", Toast.LENGTH_SHORT).show();
+                        }
                     } else {
-                        Toast.makeText(MainActivity.this, "Cannot start recording - audio focus denied", Toast.LENGTH_SHORT).show();
+                        requestPermissions();
                     }
-                } else {
-                    requestPermissions();
+                } else if (viewId == R.id.btnStop) {
+                    //Log.i("AudioData ", "Stop pressed");
+                    enableButtons(false);
+                    stopRecording();
+                    releaseAudioFocus();
                 }
-            } else if (viewId == R.id.btnStop) {
-                //Log.i("AudioData ", "Stop pressed");
-                enableButtons(false);
-                stopRecording();
-                releaseAudioFocus();
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "Button Click Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                Log.e("MainActivity", "btnClick failed", e);
             }
         }
     };
 
     private void checkPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!hasRequiredPermissions()) {
-                requestPermissions();
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (!hasRequiredPermissions()) {
+                    requestPermissions();
+                }
             }
+        } catch (Exception e) {
+            Toast.makeText(this, "Check Permissions Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "checkPermissions failed", e);
         }
     }
 
     private boolean hasRequiredPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            for (String permission : REQUIRED_PERMISSIONS) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && 
-                    permission.equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    // Skip WRITE_EXTERNAL_STORAGE check on API 33+ (Android 13+)
-                    continue;
-                }
-                if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                    return false;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                for (String permission : REQUIRED_PERMISSIONS) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && 
+                        permission.equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                        // Skip WRITE_EXTERNAL_STORAGE check on API 33+ (Android 13+)
+                        continue;
+                    }
+                    if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                        return false;
+                    }
                 }
             }
+            return true;
+        } catch (Exception e) {
+            Toast.makeText(this, "Permission Check Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "hasRequiredPermissions failed", e);
+            return false;
         }
-        return true;
     }
 
     private void requestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            String[] permissionsToRequest;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                // On API 33+, only request RECORD_AUDIO
-                permissionsToRequest = new String[]{Manifest.permission.RECORD_AUDIO};
-            } else {
-                permissionsToRequest = REQUIRED_PERMISSIONS;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                String[] permissionsToRequest;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    // On API 33+, only request RECORD_AUDIO
+                    permissionsToRequest = new String[]{Manifest.permission.RECORD_AUDIO};
+                } else {
+                    permissionsToRequest = REQUIRED_PERMISSIONS;
+                }
+                ActivityCompat.requestPermissions(this, permissionsToRequest, PERMISSIONS_REQUEST_RECORD_AUDIO);
             }
-            ActivityCompat.requestPermissions(this, permissionsToRequest, PERMISSIONS_REQUEST_RECORD_AUDIO);
+        } catch (Exception e) {
+            Toast.makeText(this, "Request Permissions Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "requestPermissions failed", e);
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
-            boolean allPermissionsGranted = true;
-            for (int result : grantResults) {
-                if (result != PackageManager.PERMISSION_GRANTED) {
-                    allPermissionsGranted = false;
-                    break;
+        try {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
+                boolean allPermissionsGranted = true;
+                for (int result : grantResults) {
+                    if (result != PackageManager.PERMISSION_GRANTED) {
+                        allPermissionsGranted = false;
+                        break;
+                    }
+                }
+                
+                if (allPermissionsGranted) {
+                    Toast.makeText(this, "Permissions granted. You can now start recording.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Permissions are required for audio recording", Toast.LENGTH_LONG).show();
                 }
             }
-            
-            if (allPermissionsGranted) {
-                Toast.makeText(this, "Permissions granted. You can now start recording.", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Permissions are required for audio recording", Toast.LENGTH_LONG).show();
-            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Permission Result Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "onRequestPermissionsResult failed", e);
         }
     }
 
     private AudioManager.OnAudioFocusChangeListener audioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
         @Override
         public void onAudioFocusChange(int focusChange) {
-            switch (focusChange) {
-                case AudioManager.AUDIOFOCUS_LOSS:
-                    // Lost focus permanently - stop recording
-                    Log.i("AudioFocus", "Audio focus lost permanently");
-                    hasAudioFocus = false;
-                    if (serviceBound && audioService != null && audioService.isRecording()) {
-                        stopRecording();
-                        runOnUiThread(() -> {
-                            enableButtons(false);
-                            Toast.makeText(MainActivity.this, "Recording stopped - audio focus lost", Toast.LENGTH_SHORT).show();
-                        });
-                    }
-                    break;
-                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                    // Lost focus temporarily - pause recording
-                    Log.i("AudioFocus", "Audio focus lost temporarily");
-                    hasAudioFocus = false;
-                    // For simplicity, we'll stop recording rather than pause
-                    if (serviceBound && audioService != null && audioService.isRecording()) {
-                        stopRecording();
-                        runOnUiThread(() -> {
-                            enableButtons(false);
-                            Toast.makeText(MainActivity.this, "Recording stopped - temporary interruption", Toast.LENGTH_SHORT).show();
-                        });
-                    }
-                    break;
-                case AudioManager.AUDIOFOCUS_GAIN:
-                    // Regained focus
-                    Log.i("AudioFocus", "Audio focus gained");
-                    hasAudioFocus = true;
-                    break;
+            try {
+                switch (focusChange) {
+                    case AudioManager.AUDIOFOCUS_LOSS:
+                        // Lost focus permanently - stop recording
+                        Log.i("AudioFocus", "Audio focus lost permanently");
+                        hasAudioFocus = false;
+                        if (serviceBound && audioService != null && audioService.isRecording()) {
+                            stopRecording();
+                            runOnUiThread(() -> {
+                                enableButtons(false);
+                                Toast.makeText(MainActivity.this, "Recording stopped - audio focus lost", Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                        break;
+                    case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                        // Lost focus temporarily - pause recording
+                        Log.i("AudioFocus", "Audio focus lost temporarily");
+                        hasAudioFocus = false;
+                        // For simplicity, we'll stop recording rather than pause
+                        if (serviceBound && audioService != null && audioService.isRecording()) {
+                            stopRecording();
+                            runOnUiThread(() -> {
+                                enableButtons(false);
+                                Toast.makeText(MainActivity.this, "Recording stopped - temporary interruption", Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                        break;
+                    case AudioManager.AUDIOFOCUS_GAIN:
+                        // Regained focus
+                        Log.i("AudioFocus", "Audio focus gained");
+                        hasAudioFocus = true;
+                        break;
+                }
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "Audio Focus Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                Log.e("MainActivity", "onAudioFocusChange failed", e);
             }
         }
     };
 
     private boolean requestAudioFocus() {
-        if (audioManager == null) {
+        try {
+            if (audioManager == null) {
+                return false;
+            }
+
+            int result;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // Use AudioFocusRequest for API 26+
+                android.media.AudioFocusRequest focusRequest = new android.media.AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                        .setAudioAttributes(new android.media.AudioAttributes.Builder()
+                                .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build())
+                        .setAcceptsDelayedFocusGain(true)
+                        .setOnAudioFocusChangeListener(audioFocusChangeListener)
+                        .build();
+                result = audioManager.requestAudioFocus(focusRequest);
+            } else {
+                // Use deprecated method for older APIs
+                result = audioManager.requestAudioFocus(
+                        audioFocusChangeListener,
+                        AudioManager.STREAM_MUSIC,
+                        AudioManager.AUDIOFOCUS_GAIN
+                );
+            }
+
+            hasAudioFocus = (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED);
+            Log.i("AudioFocus", "Audio focus request result: " + (hasAudioFocus ? "GRANTED" : "DENIED"));
+            return hasAudioFocus;
+        } catch (Exception e) {
+            Toast.makeText(this, "Audio Focus Request Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "requestAudioFocus failed", e);
             return false;
         }
-
-        int result;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Use AudioFocusRequest for API 26+
-            android.media.AudioFocusRequest focusRequest = new android.media.AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                    .setAudioAttributes(new android.media.AudioAttributes.Builder()
-                            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
-                            .build())
-                    .setAcceptsDelayedFocusGain(true)
-                    .setOnAudioFocusChangeListener(audioFocusChangeListener)
-                    .build();
-            result = audioManager.requestAudioFocus(focusRequest);
-        } else {
-            // Use deprecated method for older APIs
-            result = audioManager.requestAudioFocus(
-                    audioFocusChangeListener,
-                    AudioManager.STREAM_MUSIC,
-                    AudioManager.AUDIOFOCUS_GAIN
-            );
-        }
-
-        hasAudioFocus = (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED);
-        Log.i("AudioFocus", "Audio focus request result: " + (hasAudioFocus ? "GRANTED" : "DENIED"));
-        return hasAudioFocus;
     }
 
     private void releaseAudioFocus() {
-        if (audioManager != null && hasAudioFocus) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                // For API 26+, we'd need to store the AudioFocusRequest object
-                // For simplicity, using the deprecated method for all versions
-                audioManager.abandonAudioFocus(audioFocusChangeListener);
-            } else {
-                audioManager.abandonAudioFocus(audioFocusChangeListener);
+        try {
+            if (audioManager != null && hasAudioFocus) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    // For API 26+, we'd need to store the AudioFocusRequest object
+                    // For simplicity, using the deprecated method for all versions
+                    audioManager.abandonAudioFocus(audioFocusChangeListener);
+                } else {
+                    audioManager.abandonAudioFocus(audioFocusChangeListener);
+                }
+                hasAudioFocus = false;
+                Log.i("AudioFocus", "Audio focus released");
             }
-            hasAudioFocus = false;
-            Log.i("AudioFocus", "Audio focus released");
+        } catch (Exception e) {
+            Toast.makeText(this, "Release Audio Focus Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "releaseAudioFocus failed", e);
         }
     }
 
     // onClick of backbutton finishes the activity.
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            finish();
+        try {
+            if (keyCode == KeyEvent.KEYCODE_BACK) {
+                finish();
+            }
+            return super.onKeyDown(keyCode, event);
+        } catch (Exception e) {
+            Toast.makeText(this, "Key Down Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e("MainActivity", "onKeyDown failed", e);
+            return false;
         }
-        return super.onKeyDown(keyCode, event);
     }
 
     @Override
@@ -301,111 +380,180 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-        // Clean up audio focus when activity is destroyed
-        if (serviceBound && audioService != null && audioService.isRecording()) {
-            stopRecording();
-        }
-        releaseAudioFocus();
-        
-        // Unbind from service
-        if (serviceBound) {
-            unbindService(serviceConnection);
-            serviceBound = false;
+        try {
+            super.onDestroy();
+            // Clean up audio focus when activity is destroyed
+            if (serviceBound && audioService != null && audioService.isRecording()) {
+                stopRecording();
+            }
+            releaseAudioFocus();
+            
+            // Unbind from service
+            if (serviceBound) {
+                unbindService(serviceConnection);
+                serviceBound = false;
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Destroy Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e("MainActivity", "onDestroy failed", e);
         }
     }
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            AudioRecordingService.AudioRecordingBinder binder = (AudioRecordingService.AudioRecordingBinder) service;
-            audioService = binder.getService();
-            serviceBound = true;
-            
-            // Set up audio data callback
-            audioService.setAudioDataCallback(new AudioRecordingService.AudioDataCallback() {
-                @Override
-                public void onAudioData(double decibel) {
-                    MainActivity.this.decibel = decibel;
-                    updateAudioVisualization();
-                }
+            try {
+                AudioRecordingService.AudioRecordingBinder binder = (AudioRecordingService.AudioRecordingBinder) service;
+                audioService = binder.getService();
+                serviceBound = true;
+                
+                // Set up audio data callback
+                audioService.setAudioDataCallback(new AudioRecordingService.AudioDataCallback() {
+                    @Override
+                    public void onAudioData(double decibel) {
+                        try {
+                            MainActivity.this.decibel = decibel;
+                            updateAudioVisualization();
+                        } catch (Exception e) {
+                            runOnUiThread(() -> {
+                                Toast.makeText(MainActivity.this, "Audio Data Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                            Log.e("MainActivity", "onAudioData failed", e);
+                        }
+                    }
 
-                @Override
-                public void onRecordingStarted() {
-                    runOnUiThread(() -> {
-                        enableButtons(true);
-                        startAudioVisualization();
-                    });
-                }
+                    @Override
+                    public void onRecordingStarted() {
+                        try {
+                            runOnUiThread(() -> {
+                                enableButtons(true);
+                                startAudioVisualization();
+                            });
+                        } catch (Exception e) {
+                            runOnUiThread(() -> {
+                                Toast.makeText(MainActivity.this, "Recording Started Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                            Log.e("MainActivity", "onRecordingStarted failed", e);
+                        }
+                    }
 
-                @Override
-                public void onRecordingStopped() {
-                    runOnUiThread(() -> {
-                        enableButtons(false);
-                        stopAudioVisualization();
-                    });
-                }
+                    @Override
+                    public void onRecordingStopped() {
+                        try {
+                            runOnUiThread(() -> {
+                                enableButtons(false);
+                                stopAudioVisualization();
+                            });
+                        } catch (Exception e) {
+                            runOnUiThread(() -> {
+                                Toast.makeText(MainActivity.this, "Recording Stopped Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                            Log.e("MainActivity", "onRecordingStopped failed", e);
+                        }
+                    }
 
-                @Override
-                public void onRecordingError(String error) {
-                    runOnUiThread(() -> {
-                        enableButtons(false);
-                        stopAudioVisualization();
-                        Toast.makeText(MainActivity.this, "Recording error: " + error, Toast.LENGTH_LONG).show();
-                    });
-                }
-            });
-            
-            Log.d("MainActivity", "Audio service connected");
+                    @Override
+                    public void onRecordingError(String error) {
+                        try {
+                            runOnUiThread(() -> {
+                                enableButtons(false);
+                                stopAudioVisualization();
+                                Toast.makeText(MainActivity.this, "Recording error: " + error, Toast.LENGTH_LONG).show();
+                            });
+                        } catch (Exception e) {
+                            Log.e("MainActivity", "onRecordingError callback failed", e);
+                        }
+                    }
+                });
+                
+                Log.d("MainActivity", "Audio service connected");
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "Service Connected Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                Log.e("MainActivity", "onServiceConnected failed", e);
+            }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            audioService = null;
-            serviceBound = false;
-            Log.d("MainActivity", "Audio service disconnected");
+            try {
+                audioService = null;
+                serviceBound = false;
+                Log.d("MainActivity", "Audio service disconnected");
+            } catch (Exception e) {
+                Log.e("MainActivity", "onServiceDisconnected failed", e);
+            }
         }
     };
 
     private void bindAudioService() {
-        Intent intent = new Intent(this, AudioRecordingService.class);
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        try {
+            Intent intent = new Intent(this, AudioRecordingService.class);
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        } catch (Exception e) {
+            Toast.makeText(this, "Bind Service Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "bindAudioService failed", e);
+        }
     }
 
     private void updateAudioVisualization() {
-        runOnUiThread(() -> {
-            graphLastXValue += 1d;
-            if (decibel >= -30.0) {
-                textView.setText("SNORING");
-            } else {
-                textView.setText("NORMAL");
-            }
-            mSeries.appendData(new DataPoint(graphLastXValue, decibel), true, 100);
-        });
+        try {
+            runOnUiThread(() -> {
+                try {
+                    graphLastXValue += 1d;
+                    if (decibel >= -30.0) {
+                        textView.setText("SNORING");
+                    } else {
+                        textView.setText("NORMAL");
+                    }
+                    mSeries.appendData(new DataPoint(graphLastXValue, decibel), true, 100);
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "UI Update Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e("MainActivity", "updateAudioVisualization UI failed", e);
+                }
+            });
+        } catch (Exception e) {
+            Toast.makeText(this, "Visualization Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e("MainActivity", "updateAudioVisualization failed", e);
+        }
     }
 
     private Runnable mTimer;
 
     private void startAudioVisualization() {
-        if (mTimer != null) {
-            mHandler.removeCallbacks(mTimer);
-        }
-        
-        mTimer = new Runnable() {
-            @Override
-            public void run() {
-                // The visualization is now updated by the service callback
-                // This timer is just to ensure consistent UI updates
-                mHandler.postDelayed(this, 35);
+        try {
+            if (mTimer != null) {
+                mHandler.removeCallbacks(mTimer);
             }
-        };
-        mHandler.postDelayed(mTimer, 1000);
+            
+            mTimer = new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        // The visualization is now updated by the service callback
+                        // This timer is just to ensure consistent UI updates
+                        mHandler.postDelayed(this, 35);
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "Timer Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e("MainActivity", "visualization timer failed", e);
+                    }
+                }
+            };
+            mHandler.postDelayed(mTimer, 1000);
+        } catch (Exception e) {
+            Toast.makeText(this, "Start Visualization Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e("MainActivity", "startAudioVisualization failed", e);
+        }
     }
 
     private void stopAudioVisualization() {
-        if (mTimer != null) {
-            mHandler.removeCallbacks(mTimer);
-            mTimer = null;
+        try {
+            if (mTimer != null) {
+                mHandler.removeCallbacks(mTimer);
+                mTimer = null;
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, "Stop Visualization Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Log.e("MainActivity", "stopAudioVisualization failed", e);
         }
     }
 }

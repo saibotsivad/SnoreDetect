@@ -29,12 +29,12 @@
         android:layout_centerHorizontal="true" />
 
     <com.jjoe64.graphview.GraphView
-        android:layout_height="200dip"
+        android:layout_height="200dp"
         android:id="@+id/graph"
         android:layout_marginBottom="39dp"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
-        android:layout_width="300dip" />
+        android:layout_width="300dp" />
 
     <TextView
         android:text="SNORE DETECTION"

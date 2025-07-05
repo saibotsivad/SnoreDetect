@@ -67,12 +67,13 @@ public class MainActivity extends AppCompatActivity {
             enableButtons(false);
             textView = (TextView) findViewById(R.id.textView);
 
-            GraphView graph = (GraphView) findViewById(R.id.graph);
+            // GraphView temporarily replaced with simple View for debugging
+            View graph = findViewById(R.id.graph);
             mSeries = new LineGraphSeries<>();
-            graph.addSeries(mSeries);
-            graph.getViewport().setXAxisBoundsManual(true);
-            graph.getViewport().setMinX(0);
-            graph.getViewport().setMaxX(100);
+            // graph.addSeries(mSeries);
+            // graph.getViewport().setXAxisBoundsManual(true);
+            // graph.getViewport().setMinX(0);
+            // graph.getViewport().setMaxX(100);
 
             // Initialize AudioManager
             audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
@@ -505,7 +506,7 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         textView.setText("NORMAL");
                     }
-                    mSeries.appendData(new DataPoint(graphLastXValue, decibel), true, 100);
+                    // mSeries.appendData(new DataPoint(graphLastXValue, decibel), true, 100);
                 } catch (Exception e) {
                     Toast.makeText(MainActivity.this, "UI Update Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     Log.e("MainActivity", "updateAudioVisualization UI failed", e);

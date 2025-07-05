@@ -41,8 +41,8 @@ The application follows a single-activity architecture:
 
 ## Dependencies
 
-- GraphView 4.2.1 for audio visualization
-- Android Support Library v7
+- GraphView 4.2.1 for audio visualization (DEPRECATED - incompatible with API 35)
+- AndroidX AppCompat and Core libraries
 - Standard Android testing libraries (JUnit, Espresso)
 
 ## Audio Processing Details
@@ -53,3 +53,37 @@ The snoring detection algorithm:
 3. Calculates decibel levels: `20.0 * log10(sample / 65535.0)`
 4. Classifies as "SNORING" if dB > -30.0, otherwise "NORMAL"
 5. Updates UI every 35ms with new data points
+
+## Graph Visualization Requirements
+
+For displaying real-time snoring activity during sleep sessions:
+
+### Current Issues
+- GraphView 4.2.1 causes XML parsing errors on Android API 35
+- Library maintainer seeking replacement - limited future support
+- Binary XML parsing fails when inflating GraphView component
+
+### Visualization Needs
+- **Real-time line chart** showing decibel levels over time
+- **Horizontal scrolling** as new data points arrive
+- **Visual threshold line** at -30.0 dB to indicate snoring detection
+- **Time-based X-axis** (duration of recording session)
+- **Decibel Y-axis** (typically -60 to 0 dB range)
+- **Data point updates** every 35ms for smooth visualization
+- **Memory management** to prevent accumulating excessive data points
+
+### Implementation Options
+1. **MPAndroidChart** (Recommended)
+   - Current version: 3.1.0
+   - Active maintenance and API 35 compatibility
+   - Real-time line chart capabilities
+   - Superior performance for streaming data
+
+2. **Custom Canvas Drawing**
+   - Direct control over rendering
+   - Minimal dependencies
+   - Requires manual implementation of scrolling/scaling
+
+3. **Updated GraphView**
+   - Wait for API 35 compatible version
+   - Risk of continued compatibility issues

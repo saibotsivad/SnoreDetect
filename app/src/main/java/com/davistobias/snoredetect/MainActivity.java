@@ -22,15 +22,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.DataPoint;
-import com.jjoe64.graphview.series.LineGraphSeries;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.components.LimitLine;
+import android.graphics.Color;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.Buffer;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,8 +58,11 @@ public class MainActivity extends AppCompatActivity {
     private boolean serviceBound = false;
 
     private final Handler mHandler = new Handler();
-    private LineGraphSeries<DataPoint> mSeries;
-    private double graphLastXValue = 0d;
+    private LineChart chart;
+    private LineDataSet dataSet;
+    private LineData lineData;
+    private float graphLastXValue = 0f;
+    private final int MAX_DATA_POINTS = 100; // Limit for memory management
     public double decibel = 0d;
     public TextView textView;
 
@@ -67,13 +76,9 @@ public class MainActivity extends AppCompatActivity {
             enableButtons(false);
             textView = (TextView) findViewById(R.id.textView);
 
-            // GraphView temporarily replaced with simple View for debugging
-            View graph = findViewById(R.id.graph);
-            mSeries = new LineGraphSeries<>();
-            // graph.addSeries(mSeries);
-            // graph.getViewport().setXAxisBoundsManual(true);
-            // graph.getViewport().setMinX(0);
-            // graph.getViewport().setMaxX(100);
+            // Initialize MPAndroidChart for real-time audio visualization
+            chart = findViewById(R.id.graph);
+            setupChart();
 
             // Initialize AudioManager
             audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
@@ -500,13 +505,13 @@ public class MainActivity extends AppCompatActivity {
         try {
             runOnUiThread(() -> {
                 try {
-                    graphLastXValue += 1d;
+                    // graphLastXValue is now updated in updateChart method
                     if (decibel >= -30.0) {
                         textView.setText("SNORING");
                     } else {
                         textView.setText("NORMAL");
                     }
-                    // mSeries.appendData(new DataPoint(graphLastXValue, decibel), true, 100);
+                    updateChart((float) decibel);
                 } catch (Exception e) {
                     Toast.makeText(MainActivity.this, "UI Update Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     Log.e("MainActivity", "updateAudioVisualization UI failed", e);
@@ -555,6 +560,103 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             Toast.makeText(this, "Stop Visualization Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             Log.e("MainActivity", "stopAudioVisualization failed", e);
+        }
+    }
+
+    private void setupChart() {
+        try {
+            if (chart == null) {
+                Toast.makeText(this, "Chart Setup Error: Chart is null", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Configure chart appearance
+            chart.getDescription().setEnabled(false);
+            chart.setTouchEnabled(true);
+            chart.setDragEnabled(true);
+            chart.setScaleEnabled(false);
+            chart.setPinchZoom(false);
+            chart.setDrawGridBackground(false);
+            chart.setBackgroundColor(Color.BLACK);
+
+            // Configure X-axis (time)
+            XAxis xAxis = chart.getXAxis();
+            xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+            xAxis.setTextColor(Color.WHITE);
+            xAxis.setDrawGridLines(true);
+            xAxis.setGridColor(Color.GRAY);
+            xAxis.setAxisMinimum(0f);
+            xAxis.setAxisMaximum(100f);
+
+            // Configure Y-axis (decibels)
+            YAxis leftAxis = chart.getAxisLeft();
+            leftAxis.setTextColor(Color.WHITE);
+            leftAxis.setDrawGridLines(true);
+            leftAxis.setGridColor(Color.GRAY);
+            leftAxis.setAxisMaximum(0f);    // 0 dB max
+            leftAxis.setAxisMinimum(-60f);  // -60 dB min
+
+            // Add snoring threshold line at -30.0 dB
+            LimitLine snoreThreshold = new LimitLine(-30f, "Snoring Threshold");
+            snoreThreshold.setLineColor(Color.RED);
+            snoreThreshold.setLineWidth(2f);
+            snoreThreshold.setTextColor(Color.RED);
+            snoreThreshold.setTextSize(12f);
+            leftAxis.addLimitLine(snoreThreshold);
+
+            // Disable right axis
+            chart.getAxisRight().setEnabled(false);
+
+            // Initialize data
+            dataSet = new LineDataSet(new ArrayList<Entry>(), "Audio Level (dB)");
+            dataSet.setColor(Color.GREEN);
+            dataSet.setCircleColor(Color.GREEN);
+            dataSet.setLineWidth(2f);
+            dataSet.setCircleRadius(1f);
+            dataSet.setDrawCircleHole(false);
+            dataSet.setValueTextSize(0f); // Hide value labels
+            dataSet.setDrawValues(false);
+            dataSet.setMode(LineDataSet.Mode.LINEAR);
+
+            lineData = new LineData(dataSet);
+            chart.setData(lineData);
+            chart.invalidate();
+
+            Log.d("MainActivity", "Chart setup completed successfully");
+        } catch (Exception e) {
+            Toast.makeText(this, "Chart Setup Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Log.e("MainActivity", "setupChart failed", e);
+        }
+    }
+
+    private void updateChart(float decibelValue) {
+        try {
+            if (chart == null || dataSet == null) {
+                return;
+            }
+
+            // Add new data point
+            graphLastXValue += 1f;
+            dataSet.addEntry(new Entry(graphLastXValue, decibelValue));
+
+            // Remove old data points if we exceed maximum
+            if (dataSet.getEntryCount() > MAX_DATA_POINTS) {
+                dataSet.removeFirst();
+                
+                // Shift X-axis to show recent data
+                XAxis xAxis = chart.getXAxis();
+                xAxis.setAxisMinimum(graphLastXValue - MAX_DATA_POINTS);
+                xAxis.setAxisMaximum(graphLastXValue);
+            }
+
+            // Update chart data
+            lineData.notifyDataChanged();
+            chart.notifyDataSetChanged();
+            chart.invalidate(); // Refresh the chart
+
+        } catch (Exception e) {
+            Log.e("MainActivity", "updateChart failed", e);
+            // Don't show toast here as this is called frequently
         }
     }
 }

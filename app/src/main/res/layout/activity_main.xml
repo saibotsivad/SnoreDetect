@@ -37,13 +37,12 @@
 
     </LinearLayout>
 
-    <!-- Graph takes up remaining space -->
+    <!-- Graph with fixed height -->
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/graph"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/textView"
-        android:layout_marginTop="32dp"
-        android:layout_marginBottom="32dp" />
+        android:layout_height="250dp"
+        android:layout_below="@+id/buttonLayout"
+        android:layout_marginTop="16dp" />
 
 </RelativeLayout>

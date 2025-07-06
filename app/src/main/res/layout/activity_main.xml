@@ -28,15 +28,6 @@
         android:layout_below="@+id/btnStart"
         android:layout_alignStart="@+id/btnStart" />
 
-    <TextView
-        android:text="SNORE DETECTION"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="23dp"
-        android:id="@+id/textView"
-        android:layout_below="@+id/btnStop"
-        android:layout_centerHorizontal="true" />
-
     <com.github.mikephil.charting.charts.LineChart
         android:layout_height="200dp"
         android:id="@+id/graph"

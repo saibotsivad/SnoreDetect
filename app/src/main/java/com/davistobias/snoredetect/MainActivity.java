@@ -165,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
                 if (viewId == R.id.btnStart) {
                     //Log.i("AudioData ", "Start Pressed");
                     if (hasRequiredPermissions()) {
+                        Toast.makeText(MainActivity.this, "Starting...", Toast.LENGTH_SHORT).show();
                         if (requestAudioFocus()) {
                             enableButtons(true);
                             startRecording();
@@ -172,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, "Cannot start recording - audio focus denied", Toast.LENGTH_SHORT).show();
                         }
                     } else {
+                        Toast.makeText(MainActivity.this, "Requesting permission", Toast.LENGTH_SHORT).show();
                         requestPermissions();
                     }
                 } else if (viewId == R.id.btnStop) {

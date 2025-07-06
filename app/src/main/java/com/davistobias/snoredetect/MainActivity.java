@@ -206,16 +206,31 @@ public class MainActivity extends AppCompatActivity {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 for (String permission : REQUIRED_PERMISSIONS) {
+                    // Skip WRITE_EXTERNAL_STORAGE check on API 33+ (Android 13+)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && 
                         permission.equals(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                        // Skip WRITE_EXTERNAL_STORAGE check on API 33+ (Android 13+)
+                        Log.d("MainActivity", "Skipping WRITE_EXTERNAL_STORAGE on API " + Build.VERSION.SDK_INT);
                         continue;
                     }
-                    if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                    
+                    // Skip POST_NOTIFICATIONS check on API < 33 (it doesn't exist before Android 13)
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU && 
+                        permission.equals(Manifest.permission.POST_NOTIFICATIONS)) {
+                        Log.d("MainActivity", "Skipping POST_NOTIFICATIONS on API " + Build.VERSION.SDK_INT);
+                        continue;
+                    }
+                    
+                    int permissionResult = ContextCompat.checkSelfPermission(this, permission);
+                    Log.d("MainActivity", "Permission " + permission + " result: " + 
+                        (permissionResult == PackageManager.PERMISSION_GRANTED ? "GRANTED" : "DENIED"));
+                    
+                    if (permissionResult != PackageManager.PERMISSION_GRANTED) {
+                        Log.w("MainActivity", "Missing permission: " + permission);
                         return false;
                     }
                 }
             }
+            Log.d("MainActivity", "All required permissions granted");
             return true;
         } catch (Exception e) {
             Toast.makeText(this, "Permission Check Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -227,14 +242,24 @@ public class MainActivity extends AppCompatActivity {
     private void requestPermissions() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                String[] permissionsToRequest;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    // On API 33+, only request RECORD_AUDIO
-                    permissionsToRequest = new String[]{Manifest.permission.RECORD_AUDIO};
-                } else {
-                    permissionsToRequest = REQUIRED_PERMISSIONS;
+                java.util.List<String> permissionsToRequest = new java.util.ArrayList<>();
+                
+                // Always need RECORD_AUDIO
+                permissionsToRequest.add(Manifest.permission.RECORD_AUDIO);
+                
+                // Add WRITE_EXTERNAL_STORAGE only on API < 33
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
                 }
-                ActivityCompat.requestPermissions(this, permissionsToRequest, PERMISSIONS_REQUEST_RECORD_AUDIO);
+                
+                // Add POST_NOTIFICATIONS only on API 33+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS);
+                }
+                
+                String[] permissionsArray = permissionsToRequest.toArray(new String[0]);
+                Log.d("MainActivity", "Requesting permissions: " + java.util.Arrays.toString(permissionsArray));
+                ActivityCompat.requestPermissions(this, permissionsArray, PERMISSIONS_REQUEST_RECORD_AUDIO);
             }
         } catch (Exception e) {
             Toast.makeText(this, "Request Permissions Error: " + e.getMessage(), Toast.LENGTH_LONG).show();

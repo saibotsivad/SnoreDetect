@@ -26,24 +26,47 @@ The application follows a single-activity architecture:
   - Audio recording using AudioRecord API with 8kHz sample rate, mono channel, 16-bit PCM encoding
   - Real-time decibel calculation from audio samples
   - Snoring detection threshold at -30.0 dB
-  - Saves audio data to `/sdcard/8k16bitMono.pcm`
+  - Saves audio data using scoped storage (getExternalFilesDir)
 
-- **GraphView Integration**: Uses jjoe64:graphview library for real-time audio level visualization
+- **MPAndroidChart Integration**: Uses MPAndroidChart v3.1.0 for real-time audio level visualization
 - **Audio Processing**: Converts 16-bit audio samples to decibel values using logarithmic calculation
 - **File Output**: Raw PCM audio data written to external storage
 
 ## Key Configuration
 
-- **Target SDK**: 25 (Android 7.1)
-- **Min SDK**: 19 (Android 4.4)
-- **Build Tools**: 25.0.1
-- **Gradle Plugin**: 2.2.0 (legacy version)
+- **Target SDK**: 35 (Android 15)
+- **Min SDK**: 24 (Android 7.0)
+- **Compile SDK**: 35
+- **Gradle Plugin**: 8.7.0
+- **Java**: OpenJDK 17
 
 ## Dependencies
 
-- GraphView 4.2.1 for audio visualization (DEPRECATED - incompatible with API 35)
-- AndroidX AppCompat and Core libraries
-- Standard Android testing libraries (JUnit, Espresso)
+### Current Libraries
+- **MPAndroidChart v3.1.0** - Real-time audio visualization with line charts
+- **Android AudioRecord API** - Low-level audio recording at 8kHz sample rate
+- **AndroidX AppCompat 1.7.0** - Modern UI components 
+- **AndroidX Core 1.13.1** - Core Android functionality
+- **JUnit 4.13.2 & Espresso 3.6.1** - Testing frameworks
+- **JitPack repository** - Required for MPAndroidChart dependency resolution
+
+### Audio Processing
+- **Sample Rate**: 8kHz mono channel recording
+- **Encoding**: 16-bit PCM format
+- **Snoring Detection**: -30.0 dB threshold for classification
+- **Real-time Visualization**: 35ms update intervals with scrolling graph
+- **File Output**: Raw PCM data saved to app-specific storage
+
+### Architecture Notes
+- **Target API**: Android 15 (API 35)
+- **Minimum API**: Android 7.0 (API 24)
+- **Service-Based Recording**: Foreground service for background audio processing
+- **Modern Permissions**: Runtime permission handling for microphone and notifications
+- **Scoped Storage**: Compliant with Android 13+ storage restrictions
+
+### Known Issues
+- **Legacy Code**: Some audio processing logic dates from Android 4.4 era
+- **UI Layout**: Uses older RelativeLayout instead of modern ConstraintLayout
 
 ## Audio Processing Details
 
@@ -58,32 +81,26 @@ The snoring detection algorithm:
 
 For displaying real-time snoring activity during sleep sessions:
 
-### Current Issues
-- GraphView 4.2.1 causes XML parsing errors on Android API 35
-- Library maintainer seeking replacement - limited future support
-- Binary XML parsing fails when inflating GraphView component
+### Current Implementation ✅ COMPLETED
+- **MPAndroidChart v3.1.0** successfully implemented and working
+- **API 35 compatibility** achieved - no XML parsing errors
+- **Real-time visualization** with comprehensive error handling
 
-### Visualization Needs
-- **Real-time line chart** showing decibel levels over time
-- **Horizontal scrolling** as new data points arrive
-- **Visual threshold line** at -30.0 dB to indicate snoring detection
-- **Time-based X-axis** (duration of recording session)
-- **Decibel Y-axis** (typically -60 to 0 dB range)
-- **Data point updates** every 35ms for smooth visualization
-- **Memory management** to prevent accumulating excessive data points
+### Implemented Features ✅
+- **Real-time line chart** - ✅ Shows decibel levels over time with green line
+- **Horizontal scrolling** - ✅ Auto-scrolls as new data points arrive
+- **Visual threshold line** - ✅ Red line at -30.0 dB for snoring detection
+- **Time-based X-axis** - ✅ Duration of recording session (100 point window)
+- **Decibel Y-axis** - ✅ Range from -60 to 0 dB with proper scaling
+- **Data point updates** - ✅ Every 35ms for smooth visualization via audio service callbacks
+- **Memory management** - ✅ Limited to 100 data points to prevent memory issues
+- **Black background** - ✅ Professional appearance with white/gray grid lines
+- **Error handling** - ✅ Comprehensive try/catch blocks with Toast messages
 
-### Implementation Options
-1. **MPAndroidChart** (Recommended)
-   - Current version: 3.1.0
-   - Active maintenance and API 35 compatibility
-   - Real-time line chart capabilities
-   - Superior performance for streaming data
-
-2. **Custom Canvas Drawing**
-   - Direct control over rendering
-   - Minimal dependencies
-   - Requires manual implementation of scrolling/scaling
-
-3. **Updated GraphView**
-   - Wait for API 35 compatible version
-   - Risk of continued compatibility issues
+### Chart Configuration
+- **LineChart component**: `com.github.mikephil.charting.charts.LineChart`
+- **Touch enabled**: Dragging supported, scaling/pinch zoom disabled
+- **Axis colors**: White text on black background
+- **Grid lines**: Gray color for both X and Y axes
+- **Data series**: Green line with 2f width, 1f circle radius
+- **Limit line**: Red snoring threshold at -30.0 dB

@@ -55,5 +55,3 @@ Or download from: https://adoptium.net/temurin/releases/?os=mac
 - Grant microphone permission when prompted
 - Audio files are saved to app-specific storage
 - Recording runs as foreground service with persistent notification
-
-## Development

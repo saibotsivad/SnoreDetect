@@ -11,15 +11,6 @@
     tools:context="com.davistobias.snoredetect.MainActivity">
 
     <Button
-        android:text="Stop"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="21dp"
-        android:id="@+id/btnStop"
-        android:layout_below="@+id/btnStart"
-        android:layout_alignStart="@+id/btnStart" />
-
-    <Button
         android:text="Start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -27,6 +18,15 @@
         android:id="@+id/btnStart"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
+
+    <Button
+        android:text="Stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="21dp"
+        android:id="@+id/btnStop"
+        android:layout_below="@+id/btnStart"
+        android:layout_alignStart="@+id/btnStart" />
 
     <com.github.mikephil.charting.charts.LineChart
         android:layout_height="200dp"

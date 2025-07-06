@@ -14,7 +14,7 @@
         android:text="Start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="54dp"
+        android:layout_marginTop="120dp"
         android:id="@+id/btnStart"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
@@ -28,14 +28,6 @@
         android:layout_below="@+id/btnStart"
         android:layout_alignStart="@+id/btnStart" />
 
-    <com.github.mikephil.charting.charts.LineChart
-        android:layout_height="200dp"
-        android:id="@+id/graph"
-        android:layout_marginBottom="39dp"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_width="300dp" />
-
     <TextView
         android:text="SNORE DETECTION"
         android:layout_width="wrap_content"
@@ -44,4 +36,14 @@
         android:id="@+id/textView"
         android:layout_below="@+id/btnStop"
         android:layout_centerHorizontal="true" />
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:layout_height="200dp"
+        android:id="@+id/graph"
+        android:layout_marginBottom="39dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_centerHorizontal="true"
+        android:layout_width="300dp" />
+
 </RelativeLayout>
